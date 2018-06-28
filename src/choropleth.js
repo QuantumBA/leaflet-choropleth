@@ -2,6 +2,16 @@ var L = require('leaflet')
 var chroma = require('chroma-js')
 var _ = require('lodash/object')
 
+
+function getFeatureValue(feature) {
+  if (typeof this === 'function') {
+    return this(feature)
+  }
+
+  return feature.properties[this.toString()]
+}
+
+
 L.choropleth = module.exports = function (geojson, opts) {
   opts = opts || {}
 
@@ -19,12 +29,7 @@ L.choropleth = module.exports = function (geojson, opts) {
   // Calculate limits
   var limits = opts.limits
   if(!limits) {
-    var values = geojson.features.map(
-      typeof opts.valueProperty === 'function' ?
-      opts.valueProperty :
-      function (item) {
-        return item.properties[opts.valueProperty]
-      })
+    var values = geojson.features.map(getFeatureValue, opts.valueProperty)
 
     limits = chroma.limits(values, opts.mode, opts.steps - 1)
   }
@@ -39,13 +44,8 @@ L.choropleth = module.exports = function (geojson, opts) {
     colors: colors,
     style: function (feature) {
       var style = {}
-      var featureValue
 
-      if (typeof opts.valueProperty === 'function') {
-        featureValue = opts.valueProperty(feature)
-      } else {
-        featureValue = feature.properties[opts.valueProperty]
-      }
+      var featureValue = getFeatureValue.call(opts.valueProperty, feature)
 
       if (!isNaN(featureValue)) {
         // Find the bucket/step/limit that this value is less than and give it that color
