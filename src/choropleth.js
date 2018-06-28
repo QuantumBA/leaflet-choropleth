@@ -17,13 +17,17 @@ L.choropleth = module.exports = function (geojson, opts) {
   var userStyle = opts.style
 
   // Calculate limits
-  var values = geojson.features.map(
-    typeof opts.valueProperty === 'function' ?
-    opts.valueProperty :
-    function (item) {
-      return item.properties[opts.valueProperty]
-    })
-  var limits = chroma.limits(values, opts.mode, opts.steps - 1)
+  var limits = opts.limits
+  if(!limits) {
+    var values = geojson.features.map(
+      typeof opts.valueProperty === 'function' ?
+      opts.valueProperty :
+      function (item) {
+        return item.properties[opts.valueProperty]
+      })
+
+    limits = chroma.limits(values, opts.mode, opts.steps - 1)
+  }
 
   // Create color buckets
   var colors = (opts.colors && opts.colors.length === limits.length ?
